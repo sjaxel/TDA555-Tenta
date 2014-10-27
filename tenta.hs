@@ -3,7 +3,7 @@ import Data.Maybe
 import Data.Char
 import Test.QuickCheck
 
--- 2012-08 Fråga 6
+-- 2012-08 Fråga 6 "Radlängd"
 example :: [String]
 example = words "The cat (Felis catus), also known as the domestic cat or housecat to distinguish it from other felids and felines, is a small, usually furry, domesticated, carnivorous mammal that is valued by humans for its companionship and for its ability to hunt vermin and household pests."
 
@@ -20,7 +20,7 @@ split w (a, (b:bs))      | length (unwords (a ++ [b])) > w
                          = (a, (b:bs))
                          | otherwise = split w ((a ++ [b]), (bs))
 
--- 2014-01 Fråga 7
+-- 2014-01 Fråga 7 "ImportantHTML"
 
 data DocPart
   = Text String
@@ -40,7 +40,7 @@ saveHTML :: DocPart -> [String]
 saveHTML (Text s)     = words s
 saveHTML (Tag _ d)    = concatMap saveHTML d
 
--- 2014-01 Fråga 6
+-- 2014-01 Fråga 6 "Radiobilen"
 c1 :: [Command]
 c1 = [FORW (-20), BACKW 10, RIGHT, FORW 100]
 
@@ -72,31 +72,36 @@ subSets :: [Int] -> [[Int]]
 subSets []     = [[]]
 subSets (x:xs) = subSets xs ++ map (x:) (subSets xs)
 
-forward :: Int -> (Int,Int) -> (Int,Int)
-forward l (x,y) = (x,y+l)
 
-rotLeft,rotRight :: (Int,Int) -> (Int,Int)
-rotLeft  (x,y) = (-y,x)
-rotRight (x,y) = (y,-x)
+-- 2011-08 Fråga 6 "Wordsnake"
 
-destination2 :: [Command] -> (Int,Int)
-destination2 [] = (0,0)
-destination2 (i:is) = case i of
-  FORW l  -> forward l    (destination2 is)
-  BACKW l -> forward (-l) (destination2 is)
-  LEFT    -> rotLeft      (destination2 is)
-  RIGHT   -> rotRight     (destination2 is)
+type Snake = [String]
 
-instance Arbitrary Command
-  where
-    arbitrary = oneof
-      [ fmap FORW arbitrary
-      , fmap BACKW arbitrary
-      , return LEFT
-      , return RIGHT
-      ]
+s1 :: [String]
+s1 = ["ahoy", "hola", "okay", "yahoo", "obrigado", "haskell"]
 
-prop_destination cs = destination cs == destination2 cs
+s2 :: Snake
+s2 = ["hola","ahoy","yahoo","obrigado","okay"]
+
+--snake :: [String] -> Snake
+snake list = [ x | x <- (perms list), (isSnake x) == True]
+
+isSnake :: [String] -> Bool
+isSnake (x1:x2:[]) = and [last x1 == head x2]
+isSnake (x1:x2:xs) = and ([last x1 == head x2] ++ [isSnake (x2:xs)])
+
+perms [] = [[]]
+perms xs = [ x:ps | x <- xs, ps <- perms (xs\\[x]) ]
+
+
+
+
+
+
+
+
+
+
 
 
 
