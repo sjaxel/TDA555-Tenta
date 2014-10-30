@@ -26,6 +26,7 @@ split w (a, (b:bs))      | length (unwords (a ++ [b])) > w
 data DocPart
   = Text String
   | Tag String Doc
+  deriving (Show, Eq)
 
 type Doc = [DocPart]
 
@@ -40,7 +41,7 @@ readHTML (Tag _ d)    = concatMap readHTML d
 saveHTML :: DocPart -> [String]
 saveHTML (Text s)     = words s
 saveHTML (Tag _ d)    = concatMap saveHTML d
-
+{-
 -- 2014-01 Fråga 6 "Radiobilen"
 c1 :: [Command]
 c1 = [FORW (-20), BACKW 10, RIGHT, FORW 100]
@@ -63,7 +64,7 @@ drive (x, y) (RIGHT)    = ((-y), x)
 
 turns :: [Command] -> Int
 turns cmd = mod (((length.filter (==RIGHT)) cmd) - ((length.filter (==LEFT)) cmd)) 4
-
+-}
 -- 2013-10 Fråga 7 "Max spend"
 
 maxSpend :: Int -> [Int] -> Int
@@ -157,29 +158,60 @@ annasSida =
             ]
   ]
 
-removeTag :: String -> Doc -> String
-removeTag s  doc = unwords (filter (/=) (checkHTML' doc))
+removeTag :: Doc -> String -> Doc
+removeTag doc rm = readHTML' doc rm
 
-checkHTML' :: Doc -> [String]
-checkHTML' doc = concatMap readHTML' doc
-
-readHTML' :: DocPart -> [String]
-readHTML' (Text s) = words s
-readHTML' (Tag s doc) = [("<" ++ s ++">")] ++ (checkHTML' doc) 
-                        ++ [("</" ++ s ++">")] 
+readHTML' :: Doc -> String -> Doc
+readHTML' [] _                = []
+readHTML' ((Text s):xs) rm    = [Text s] ++ readHTML' xs rm
+readHTML' ((Tag s doc):xs) rm | s == rm = (readHTML' doc rm) ++ (readHTML' xs rm)
+                              | otherwise = [Tag s (readHTML' doc rm)] ++ readHTML' xs rm
 
 
+data Key 
+    = Chr Char
+    | Back
+    | LeftK
+    | RightK
+
+k1 :: [Key]
+k1 = [Chr 'a', Chr 'b', Chr 'c', LeftK, Chr 'd', Back, Chr 'x', RightK, Chr 'y']
 
 
+-- 2014-10 Uppgift 7
+
+editLine :: [Key] -> [String]
+editLine keys = edit keys ([], [])
 
 
+edit :: [Key] -> (String, String) -> [String]
+edit [] (a, b)                 = []
+edit ((Chr c):ks) (a, b)       = [a ++ [c] ++ b] ++ (edit ks ((a++[c], b)))
+edit ((Back):ks) ([], b)       = [b] ++ (edit ks ([], b))
+edit ((Back):ks) (a, b)        = [(init a) ++ b] ++ (edit ks (init a, b))
+edit ((LeftK):ks) ([], b)      = [b] ++ (edit ks ([], b))
+edit ((LeftK):ks) (a, b)       = [(a ++ b)] ++ (edit ks ((init a), ((tail a)++ b)))
+edit ((RightK):ks) (a, [])     = [a] ++ (edit ks (a, []))
+edit ((RightK):ks) (a, (b:bs)) = [(a ++ [b]) ++ bs] ++ (edit ks ((a ++ [b]), bs))
 
 
+-- 2014-10 Uppgift 6
 
+data Road
+    = City String
+    | Fork Road Road
+    deriving (Show, Eq)
+    
+data LR = L | R
+    deriving (Show, Eq)
 
+insertRoad :: (Road, LR) -> String -> Road -> Road
+insertRoad (newR, lr) city oldR = eR oldR newR city lr
 
-
-
+eR :: Road -> Road -> String -> LR -> Road
+eR (City s) newR city lr | s == city && lr == L = Fork newR (City s)
+                         | s == city && lr == R = Fork (City s) newR
+eR (Fork l r) newR city lr = Fork (eR l newR city lr) (eR r newR city lr)
 
 
 
